@@ -59,7 +59,7 @@ void keyvi_string_destroy(char* str);
 
 struct keyvi_dictionary* keyvi_create_dictionary(const char*);
 
-struct keyvi_dictionary* keyvi_create_dictionary_with_strategy(const char*, uint8_t);
+struct keyvi_dictionary* keyvi_create_dictionary_with_strategy(const char*);
 
 void keyvi_dictionary_destroy(const struct keyvi_dictionary*);
 

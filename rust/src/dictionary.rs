@@ -69,9 +69,7 @@ impl Dictionary {
         loading_strategy: LoadingStrategyTypes,
     ) -> io::Result<Dictionary> {
         let fn_c = CString::new(filename)?;
-        let ptr = unsafe {
-            root::keyvi_create_dictionary_with_strategy(fn_c.as_ptr(), loading_strategy as u8)
-        };
+        let ptr = unsafe { root::keyvi_create_dictionary_with_strategy(fn_c.as_ptr()) };
         if ptr.is_null() {
             Err(io::Error::new(
                 io::ErrorKind::InvalidInput,

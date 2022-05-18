@@ -98,9 +98,9 @@ keyvi_dictionary* keyvi_create_dictionary(const char* filename) {
   }
 }
 
-keyvi_dictionary* keyvi_create_dictionary_with_strategy(const char* filename, loading_strategy_types loading_strategy) {
+keyvi_dictionary* keyvi_create_dictionary_with_strategy(const char* filename) {
   try {
-    return new keyvi_dictionary(Dictionary(filename, loading_strategy));
+    return new keyvi_dictionary(Dictionary(filename, loading_strategy_types::lazy_no_readahead));
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;
     return nullptr;
