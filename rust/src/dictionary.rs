@@ -32,6 +32,17 @@ use keyvi_match::KeyviMatch;
 use keyvi_match_iterator::KeyviMatchIterator;
 use keyvi_string::KeyviString;
 
+pub enum LoadingStrategyTypes {
+    DEFAULT_OS,        // no special treatment, use whatever the OS/Boost has as default
+    LAZY,              // load data as needed with some read-ahead
+    POPULATE, // immediately load everything in memory (blocks until everything is fully read)
+    POPULATE_KEY_PART, // populate only the key part, load value part lazy
+    POPULATE_LAZY, // load data lazy but ask the OS to read ahead if possible (does not block)
+    LAZY_NO_READAHEAD, // disable any read-ahead (for cases when index > x * main memory)
+    LAZY_NO_READAHEAD_VALUE_PART, // disable read-ahead only for the value part
+    POPULATE_KEY_PART_NO_READAHEAD_VALUE_PART, // populate the key part, but disable read ahead value part
+}
+
 pub struct Dictionary {
     dict: *mut root::keyvi_dictionary,
 }
@@ -44,6 +55,23 @@ impl Dictionary {
     pub fn new(filename: &str) -> io::Result<Dictionary> {
         let fn_c = CString::new(filename)?;
         let ptr = unsafe { root::keyvi_create_dictionary(fn_c.as_ptr()) };
+        if ptr.is_null() {
+            Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "could not load file",
+            ))
+        } else {
+            Ok(Dictionary { dict: ptr })
+        }
+    }
+    pub fn new_with_strategy(
+        filename: &str,
+        loading_strategy: LoadingStrategyTypes,
+    ) -> io::Result<Dictionary> {
+        let fn_c = CString::new(filename)?;
+        let ptr = unsafe {
+            root::keyvi_create_dictionary_with_strategy(fn_c.as_ptr(), loading_strategy as u8)
+        };
         if ptr.is_null() {
             Err(io::Error::new(
                 io::ErrorKind::InvalidInput,

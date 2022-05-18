@@ -76,6 +76,7 @@ fn main() {
         .allowlist_function("keyvi_bytes_destroy")
         .allowlist_function("keyvi_string_destroy")
         .allowlist_function("keyvi_create_dictionary")
+        .allowlist_function("keyvi_create_dictionary_with_strategy")
         .allowlist_function("keyvi_dictionary_destroy")
         .allowlist_function("keyvi_dictionary_get")
         .allowlist_function("keyvi_dictionary_get_all_items")
