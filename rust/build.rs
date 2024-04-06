@@ -23,26 +23,48 @@
  *  Author: Narek Gharibyan <narekgharibyan@gmail.com>
  *          Subu <subu@cliqz.com>
  */
-
 extern crate bindgen;
 extern crate cmake;
 
 use std::env;
 use std::path::PathBuf;
 
-use cmake::Config;
-
 fn main() {
-    let dst = Config::new("keyvi_core/").build_target("keyvi_c").build();
+    let dst = cmake::Config::new("keyvi_core/")
+        .build_target("keyvi_c")
+        .build();
+    let keyvi_c_path = dst.join("build").display().to_string();
 
-    // Tell cargo to tell rustc to link keyvi
-    println!("cargo:rustc-link-lib=dylib=keyvi_c");
-    println!(
-        "cargo:rustc-link-search=native={}",
-        dst.join("build").display()
-    );
+    // trigger rebuild
+    println!("cargo:rerun-if-changed=keyvi_core/");
+    println!("cargo:rerun-if-env-changed=STATIC_ZLIB_PATH");
+    println!("cargo:rerun-if-env-changed=STATIC_SNAPPY_PATH");
 
-    println!("Starting to generate bindings..");
+    // link dependencies
+    println!("cargo:rustc-link-lib=static=keyvi_c");
+    println!("cargo:rustc-link-search=native={}", keyvi_c_path);
+
+    // using nightly-only feature static-bundle would make this unnecessary
+    if let Ok(zlib_path) = env::var("STATIC_ZLIB_PATH") {
+        println!("cargo:rustc-link-lib=static=z");
+        println!("cargo:rustc-link-search=native={}", zlib_path);
+    } else {
+        println!("cargo:rustc-link-lib=dylib=z");
+    }
+
+    if let Ok(snappy_path) = env::var("STATIC_SNAPPY_PATH") {
+        println!("cargo:rustc-link-lib=static=snappy");
+        println!("cargo:rustc-link-search=native={}", snappy_path);
+    } else {
+        println!("cargo:rustc-link-lib=dylib=snappy");
+    }
+
+    let target = std::env::var("TARGET").unwrap_or_default();
+    if target == "x86_64-apple-darwin" || target == "aarch64-apple-darwin" {
+        println!("cargo:rustc-link-lib=dylib=c++");
+    } else {
+        println!("cargo:rustc-link-lib=dylib=stdc++");
+    }
 
     let bindings = bindgen::Builder::default()
         // The input header we would like to generate bindings for.
@@ -54,6 +76,7 @@ fn main() {
         .allowlist_function("keyvi_bytes_destroy")
         .allowlist_function("keyvi_string_destroy")
         .allowlist_function("keyvi_create_dictionary")
+        .allowlist_function("keyvi_create_dictionary_with_strategy")
         .allowlist_function("keyvi_dictionary_destroy")
         .allowlist_function("keyvi_dictionary_get")
         .allowlist_function("keyvi_dictionary_get_all_items")

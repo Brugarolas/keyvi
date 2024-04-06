@@ -37,6 +37,7 @@ using keyvi::dictionary::Match;
 using keyvi::dictionary::MatchIterator;
 using keyvi::dictionary::completion::MultiWordCompletion;
 using keyvi::dictionary::completion::PrefixCompletion;
+using keyvi::dictionary::loading_strategy_types;
 
 namespace {
 char* std_2_c_string(const std::string& str) {
@@ -91,6 +92,15 @@ void keyvi_string_destroy(char* str) {
 keyvi_dictionary* keyvi_create_dictionary(const char* filename) {
   try {
     return new keyvi_dictionary(Dictionary(filename));
+  } catch (const std::exception& e) {
+    std::cerr << e.what() << std::endl;
+    return nullptr;
+  }
+}
+
+keyvi_dictionary* keyvi_create_dictionary_with_strategy(const char* filename) {
+  try {
+    return new keyvi_dictionary(Dictionary(filename, loading_strategy_types::lazy_no_readahead));
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;
     return nullptr;

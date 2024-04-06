@@ -15,7 +15,10 @@ mod tests {
 
     #[test]
     fn dictionary_error() {
-        let dict = dictionary::Dictionary::new("test_data/fake_file_name.kv");
+        let dict = dictionary::Dictionary::new_with_strategy(
+            "test_data/fake_file_name.kv",
+            dictionary::LoadingStrategyTypes::LAZY_NO_READAHEAD,
+        );
         assert!(dict.is_err());
         assert_eq!(
             dict.err().unwrap().to_string().as_str(),
