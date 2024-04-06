@@ -48,10 +48,15 @@ namespace dictionary {
 namespace completion {
 
 class MultiWordCompletion final {
+ private:
+  using acceptor_t = std::function<bool(Match&)>;
+
  public:
   explicit MultiWordCompletion(dictionary_t d) : fsa_(d->GetFsa()) {}
 
-  MatchIterator::MatchIteratorPair GetCompletions(const std::string& query, size_t number_of_results = 10) const {
+  MatchIterator::MatchIteratorPair GetCompletions(
+      const std::string& query, size_t number_of_results = 10,
+      const acceptor_t acceptor_callback = [](Match&) { return true; }) const {
     uint64_t state = fsa_->GetStartState();
     size_t number_of_tokens;
     std::string query_bow = util::Transform::BagOfWordsPartial(query, number_of_tokens);
@@ -96,9 +101,12 @@ class MultiWordCompletion final {
               std::string(reinterpret_cast<char*>(&data->traversal_stack[0]), query_length + data->traverser.GetDepth())
                   .c_str());
         first_match = Match(0, query_length, query, 0, fsa_, fsa_->GetStateValue(state));
+        //if (!acceptor_callback(first_match)) {
+        //  first_match = Match();
+        //}
       }
 
-      auto tfunc = [data, query_length]() {
+      auto tfunc = [data, query_length, acceptor_callback]() {
         TRACE("prefix completion callback called");
 
         for (;;) {
@@ -145,7 +153,9 @@ class MultiWordCompletion final {
 
               data->traverser++;
               data->traverser.TryReduceResultQueue();
-              return m;
+              if (acceptor_callback(m)) {
+                return m;
+              }
             }
             data->traverser++;
           } else {
